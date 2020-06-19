@@ -514,6 +514,7 @@ $app->get('/json/bestemmingen', function () use ($app, $analytics, $bestemmingen
 $app->get('/async/poi-search', function () use ($app, $analytics, $bestemmingen) {
 
     $searchString = $app->request->get('search');
+    $outputFormat = $app->request->get('format');
 
     $suggestions = $bestemmingen;
 
@@ -595,7 +596,12 @@ $app->get('/async/poi-search', function () use ($app, $analytics, $bestemmingen)
         'variant' => $variant
     ];
 
-    render("web/partials/suggestion-list.twig", $data);
+    if ($outputFormat == 'json') {
+        header('Content-Type: application/json');
+        die(json_encode($data));
+    } else {
+        render("web/partials/suggestion-list.twig", $data);
+    }
 });
 
 

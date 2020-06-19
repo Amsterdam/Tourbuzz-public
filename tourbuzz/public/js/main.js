@@ -584,25 +584,35 @@ function loadAvailability (el) {
 // POI search //
 ////////////////
 
+var poiSearchSuggestions = document.querySelector('[data-poi-search-suggestion-list]');
+
 function POISearchForm (el) {
     el.addEventListener('submit', function(e) {
         e.preventDefault();
         var poiSearchInput = document.querySelector('[data-poi-search-input]');
-        console.log(poiSearchInput);
-        poiSearchInput.value = '';
+        var searchString = poiSearchInput.value;
 
-        var dataUrl = '/async/poi-search?search=' + el.value;
+        var dataUrl = '/async/poi-search?format=json&search=' + searchString;
         axios.get(dataUrl)
             .then(function (response) {
                 res = response.data;
-                poiSearchSuggestions.innerHTML = res;
+                var firstHit;
+                if (undefined !== res.suggestions[0]) {
+                    firstHit = res.suggestions[0];
+                    if (firstHit.match.toLowerCase() == searchString.toLowerCase() && firstHit.prefix == '' && firstHit.suffix == '') { // exact match
+                        if ( undefined !== firstHit.bag_uri && firstHit.bag_uri !== null ) {
+                            gotoSearchResultBagUri(firstHit.bag_uri, searchString);
+                        } else {
+                            gotoSearchResultLatLon(firstHit.lat, firstHit.lon, searchString);
+                        }
+                    }
+                }
+                resetSearchForm ();
             });
     })
 }
 
 function POISearch (el) {
-
-    var poiSearchSuggestions = document.querySelector('[data-poi-search-suggestion-list]');
 
     el.addEventListener('input', function(e) {
 
@@ -617,50 +627,68 @@ function POISearch (el) {
 
 }
 
-function gotoSearchResult (el) {
+function gotoSearchResultBagUri (bagUri, searchString) {
     var mapView = document.querySelector('[data-mapview]');
-    var bagUri = el.getAttribute('data-bag-uri');
-    var poiSuggestions = document.querySelector('[data-suggestion-list]');
 
+    var bagId = bagUri.split('/');
+    bagId = bagId[6];
+    axios.get('/async/bag-geojson/'+ bagId)
+        .then(function (response) {
+            res = response.data;
+            var styles = {
+                weight: 2,
+                opacity: 1,
+                color: '#A00078'
+            };
+            var popupHTML = '<p>'+ searchString +'</p>';
+
+            removeLayer('searchresult');
+            mapLayers['searchresult'] = L.geoJSON(res, {style: styles} ).bindPopup(popupHTML).addTo(tbmap);
+            tbmap.fitBounds(mapLayers['searchresult'].getBounds());
+            resetSearchForm ();
+        });
+}
+
+function gotoSearchResultLatLon (lat, lon, searchString) {
+    var mapView = document.querySelector('[data-mapview]');
+
+    var customIcon = new L.divIcon({
+        iconSize: [36, 39],
+        iconAnchor: [18, 39],
+        popupAnchor: [0, -40],
+        className: 'custom-icon-whereami'
+    });
+
+    var popupHTML = '<p>'+ searchString +'</p>';
+
+    removeLayer('searchresult');
+    mapLayers['searchresult'] = L.marker([lat, lon]).bindPopup(popupHTML).addTo(tbmap);
+
+    mapView.setAttribute('data-center-lat', lat);
+    mapView.setAttribute('data-center-lng', lon);
+    mapView.setAttribute('data-zoom', 16);
+    updateMap(mapView);
+    resetSearchForm ();
+}
+
+function resetSearchForm () {
+    var poiSuggestions = document.querySelector('[data-suggestion-list]');
+    var poiSearchInput = document.querySelector('[data-poi-search-input]');
+
+    poiSearchInput.value = '';
     poiSuggestions.classList.remove('-active');
+}
+
+function gotoSearchResult (el) {
+    var bagUri = el.getAttribute('data-bag-uri');
+    var searchString = el.getAttribute('data-search-string');
 
     if (bagUri !== '') {
-        var bagId = bagUri.split('/');
-        bagId = bagId[6];
-        axios.get('/async/bag-geojson/'+ bagId)
-            .then(function (response) {
-                res = response.data;
-                var styles = {
-                    weight: 2,
-                    opacity: 1,
-                    color: '#A00078'
-                };
-                var popupHTML = '<p>'+ el.getAttribute('data-search-string') +'</p>';
-
-                removeLayer('searchresult');
-                mapLayers['searchresult'] = L.geoJSON(res, {style: styles} ).bindPopup(popupHTML).addTo(tbmap);
-                tbmap.fitBounds(mapLayers['searchresult'].getBounds());
-            });
+        gotoSearchResultBagUri(bagUri, searchString);
     } else {
-
-        var customIcon = new L.divIcon({
-            iconSize: [36, 39],
-            iconAnchor: [18, 39],
-            popupAnchor: [0, -40],
-            className: 'custom-icon-whereami'
-        });
-
-        var popupHTML = '<p>'+ el.getAttribute('data-search-string') +'</p>';
         var latSearchResult = el.getAttribute('data-lat');
         var lonSearchResult = el.getAttribute('data-lon');
-
-        removeLayer('searchresult');
-        mapLayers['searchresult'] = L.marker([latSearchResult, lonSearchResult]).bindPopup(popupHTML).addTo(tbmap);
-
-        mapView.setAttribute('data-center-lat', latSearchResult);
-        mapView.setAttribute('data-center-lng', lonSearchResult);
-        mapView.setAttribute('data-zoom', 16);
-        updateMap(mapView);
+        gotoSearchResultLatLon(latSearchResult, lonSearchResult, searchString);
     }
 }
 

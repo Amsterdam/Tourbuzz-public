@@ -1,6 +1,6 @@
 <ul class="suggestion-list {{ variant }}" data-suggestion-list>
     {% if suggestions is empty %}
-        <li class="suggestions-list-no-results">Geen resultaten gevonden</li>
+        <li class="suggestions-list-no-results">Geen resultaten gevonden voor '{{ search }}'</li>
     {% else %}
         {% for item in suggestions %}
             <li>
