@@ -12,7 +12,12 @@ require "../vendor/autoload.php";
 /**
  * Load Twig plugin.
  */
-$app = new \Slim\Slim(["view" => new \Slim\Views\Twig()]);
+$app = new \Slim\Slim(
+    [
+        "view" => new \Slim\Views\Twig(),
+        "debug" => false
+    ]
+);
 $view = $app->view();
 $view->setTemplatesDirectory("../app/views");
 $view->parserExtensions = [new \Slim\Views\TwigExtension()];
