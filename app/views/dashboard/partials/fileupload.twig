@@ -1,0 +1,48 @@
+<div id="asyncImageUpload">
+  {% if bericht.image_url is not empty %}
+      <img src="{{ bericht.image_url }}">
+      <a onclick="asyncImageUploadReset()" href="#" class="close" data-close><i class="fa fa-close"></i></a>
+      <input type="hidden" name="image_id" value="{{ bericht.image_id }}">
+  {% else %}
+      <input type="file" onchange="asyncImageUpload(this)">
+  {% endif %}
+</div>
+
+<script>
+    var uri = "{{ image_api }}";
+    var token = '{{ token }}';
+    var el = document.getElementById("asyncImageUpload");
+
+    function asyncImageUpload(fileInputElement) {
+        var file = fileInputElement.files[0];
+        if (file.type !== "image/jpeg" &&
+            file.type !== "image/png") {
+            fileInputElement.value = "";
+            return;
+        }
+
+          var formData = new FormData();
+          formData.append("file", file);
+
+          $.ajax({
+                type: 'post',
+                url: uri + '?token=' + token,
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                success: function (response) {
+                      var image_url = uri + '/' + response.id;
+                      el.innerHTML =
+                              '<img src="' + image_url + '">' +
+                              '<a onclick="asyncImageUploadReset()" href="#" class="close" data-close><i class="fa fa-close"></i></a>' +
+                              '<input type="hidden" name="image_id" value="' + response.id + '">';
+                }
+          });
+	}
+
+	function asyncImageUploadReset() {
+	  el.innerHTML = '<input type="file" onchange="asyncImageUpload(this)">';
+	}
+</script>
+

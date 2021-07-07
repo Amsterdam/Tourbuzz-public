@@ -1,0 +1,77 @@
+{% extends 'base/base.twig' %}
+
+{% block main %}
+
+<main class="wrapper">
+
+    <section class="buzz">
+
+        {% include 'partials/dagselectie.twig' %}
+
+        <ol class="berichten">
+            {% if berichten is empty %}
+                <p>{{ __('Geen berichten. Goede rit toegewenst!') }} <img src="/img/geen-berichten.png" style="width: 32px; height: 32px; vertical-align: middle"></p>
+            {% endif %}
+
+            {% for record in berichten %}
+
+                {% set title %}
+                    {% if lang == 'nl' %}{{ record.title }}{% endif %}
+
+                    {% if lang == 'en' %}
+                        {% if record.title_en  is not empty %}{{ record.title_en }}
+                        {% else %}{{ record.title }} <span class="meta">(translation unavailable)</span>
+                        {% endif %}
+                    {% endif %}
+
+                    {% if lang == 'de' %}
+                        {% if record.title_de  is not empty %}{{ record.title_de }}
+                        {% else %}{{ record.title }} <span class="meta">(Übersetzung nicht verfügbar)</span>
+                        {% endif %}
+                    {% endif %}
+
+                    {% if lang == 'es' %}
+                        {% if record.title_es  is not empty %}{{ record.title_es }}
+                        {% else %}{{ record.title }} <span class="meta">(Traducción no está disponible)</span>
+                        {% endif %}
+                    {% endif %}
+                {% endset %}
+
+                {% set body %}
+                    {% if lang == 'nl' %}{{ record.body|raw }}{% endif %}
+                    {% if lang == 'en' %}{{ record.body_en|raw }}{% endif %}
+                    {% if lang == 'de' %}{{ record.body_de|raw }}{% endif %}
+                    {% if lang == 'es' %}{{ record.body_es|raw }}{% endif %}
+                {% endset %}
+
+                <li>
+                    <a href="/{{ Y }}/{{ m }}/{{ d }}/details#slide{{ loop.index }}" class="slide-link">
+                        <span class="nr">{{ loop.index }}</span>{{ title }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ol>
+
+        {% include 'partials/banner.twig' %}
+
+        <section class="kaartmap wrapper">
+            <div id="map"></div>
+            {% include 'partials/googlemap.home.js.twig' %}
+        </section>
+
+        {#<section class="kaartmap wrapper">
+            <img src="{% include 'partials/googlemap.empty.twig' %}">
+            {% for record in berichten %}
+                {% if record.rel_loc is not empty %}
+                    <a href="/{{ Y }}/{{ m }}/{{ d }}/details#slide{{ loop.index }}" style="top: {{ record.rel_loc.dY }}%; left: {{ record.rel_loc.dX }}%">
+                        <img src="/img/markers/{{ loop.index }}.png" class="maplink-m">
+                    </a>
+                {% endif %}
+            {% endfor %}
+        </section>#}
+
+    </section>
+
+</main>
+
+{% endblock %}

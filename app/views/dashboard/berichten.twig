@@ -1,0 +1,282 @@
+{% extends 'base/base.dashboard.twig' %}
+
+{% block scripts %}
+<script>
+$(function() {
+    $('#locatiezoekveld').keypress(function (e) {
+        if (e.keyCode === 10 || e.keyCode === 13) {
+            e.preventDefault();
+        }
+    });
+    var lat = '{{ bericht.location_lat }}' || 52.37940158476047;
+    var lng = '{{ bericht.location_lng }}' || 4.899436755541956;
+    $('#locationpicker').locationpicker({
+        location: {
+            latitude: lat,
+            longitude: lng
+        },
+        radius: 0,
+        zoom: 14,
+        inputBinding: {
+            locationNameInput: $('#locatiezoekveld')
+        },
+        enableAutocomplete: true,
+        onchanged: function (location) {
+            //console.log(location.latitude, location.longitude);
+            $('input[name=location_lng]').val(location.longitude);
+            $('input[name=location_lat]').val(location.latitude);
+        }
+    });
+
+    // Translate
+    $('.translate').click(function (e) {
+
+        var lang = $(this).data("lang");
+
+        var titleNL  = $('input[name=title]').val();
+        var bodyNL   = $('textarea[name=body]').val();
+        var adviceNL = $('textarea[name=advice]').val();
+
+        if (titleNL) {
+            $.ajax('/translate', {
+                method: "POST",
+                data: { lang: lang, string: titleNL},
+                success: function(data) {
+                    switch(lang) {
+                        case 'en':
+                            if( $('input[name=title_en]').val() == '' ) {
+                                $('input[name=title_en]').val(data);
+                            }
+                            break;
+                        case 'de':
+                            if( $('input[name=title_de]').val() == '' ) {
+                                $('input[name=title_de]').val(data);
+                            }
+                            break;
+                        case 'es':
+                            if( $('input[name=title_es]').val() == '' ) {
+                                $('input[name=title_es]').val(data);
+                            }
+                            break;
+                        default:
+                            alert("Taal onbekend");
+                    }
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    alert(textStatus + ': ' + errorThrown);
+                }
+            });
+        }
+
+        if (bodyNL) {
+            $.ajax('/translate', {
+                method: "POST",
+                data: { lang: lang, string: bodyNL},
+                success: function(data) {
+                    switch(lang) {
+                        case 'en':
+                            if( $('textarea[name=body_en]').val() == '' ) {
+                                $('textarea[name=body_en]').val(data);
+                            }
+                            break;
+                        case 'de':
+                            if( $('textarea[name=body_de]').val() == '' ) {
+                                $('textarea[name=body_de]').val(data);
+                            }
+                            break;
+                        case 'es':
+                            if( $('textarea[name=body_es]').val() == '' ) {
+                                $('textarea[name=body_es]').val(data);
+                            }
+                            break;
+                        default:
+                            alert("Taal onbekend");
+                    }
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    alert(textStatus + ': ' + errorThrown);
+                }
+            });
+        }
+
+        if (adviceNL) {
+            $.ajax('/translate', {
+                method: "POST",
+                data: { lang: lang, string: adviceNL},
+                success: function(data) {
+                    switch(lang) {
+                        case 'en':
+                            if( $('textarea[name=advice_en]').val() == '' ) {
+                                $('textarea[name=advice_en]').val(data);
+                            }
+                            break;
+                        case 'de':
+                            if( $('textarea[name=advice_de]').val() == '' ) {
+                                $('textarea[name=advice_de]').val(data);
+                            }
+                            break;
+                        case 'es':
+                            if( $('textarea[name=advice_es]').val() == '' ) {
+                                $('textarea[name=advice_es]').val(data);
+                            }
+                            break;
+                        default:
+                            alert("Taal onbekend");
+                    }
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    alert(textStatus + ': ' + errorThrown);
+                }
+            });
+        }
+
+    });
+
+});
+</script>
+{% endblock %}
+
+{% block main %}
+<main class="wrapper">
+    <div class="col-1-1">
+
+    {% if bericht.id is empty and not show_form %}
+        <button onclick="$('form').css({position: 'relative', left: 0}); $(this).hide()" class="button">Nieuw bericht</button>
+    {% endif %}
+
+    <form class="form-styles" method="post" action="/dashboard/berichten" {% if bericht.id is empty and not show_form %}style="position: absolute; left: -200%"{% endif %}>
+        <input type="hidden" name="id" value="{{ bericht.id }}">
+        <input type="hidden" name="location_lat" value="{{ bericht.location_lat }}">
+        <input type="hidden" name="location_lng" value="{{ bericht.location_lng }}">
+
+        <a href="/dashboard/berichten" style="float: right">Annuleren</a>
+
+        <nav pico-reset-class-container class="tab-navigation">
+            <ul class="tabselect">
+                <li>
+                    <a pico-toggle-class class="active" pico-id="tab-nl" href="#tab-nl">Nederlands</a>
+                </li>
+                <li>
+                    <a pico-toggle-class pico-id="tab-en" href="#tab-en">English</a>
+                </li>
+                <li>
+                    <a pico-toggle-class pico-id="tab-de" href="#tab-de">Deutsch</a>
+                </li>
+                <li>
+                    <a pico-toggle-class pico-id="tab-es" href="#tab-es">Español</a>
+                </li>
+            </ul>
+            <div class="tab active" pico-id="tab-nl">
+                <input type="text" name="title" placeholder="Headline" value="{{ bericht.title }}">
+                <textarea name="body" placeholder="Situatie">{{ bericht.body }}</textarea>
+                <textarea name="advice" placeholder="Advies">{{ bericht.advice }}</textarea>
+            </div>
+            <div class="tab" pico-id="tab-en">
+                <a href="#" class="translate" data-lang="en">Vertaal met Google Translate</a>
+                <input type="text" name="title_en" placeholder="Headline (engels)" value="{{ bericht.title_en }}">
+                <textarea name="body_en" placeholder="Situatie (engels)">{{ bericht.body_en }}</textarea>
+                <textarea name="advice_en" placeholder="Advies (engels)">{{ bericht.advice_en }}</textarea>
+            </div>
+            <div class="tab" pico-id="tab-de">
+                <a href="#" class="translate" data-lang="de">Vertaal met Google Translate</a>
+                <input type="text" name="title_de" placeholder="Headline (duits)" value="{{ bericht.title_de }}">
+                <textarea name="body_de" placeholder="Situatie (duits)">{{ bericht.body_de }}</textarea>
+                <textarea name="advice_de" placeholder="Advies (duits)">{{ bericht.advice_de }}</textarea>
+            </div>
+            <div class="tab" pico-id="tab-es">
+                <a href="#" class="translate" data-lang="es">Vertaal met Google Translate</a>
+                <input type="text" name="title_es" placeholder="Headline (spaans)" value="{{ bericht.title_es }}">
+                <textarea name="body_es" placeholder="Situatie (spaans)">{{ bericht.body_es }}</textarea>
+                <textarea name="advice_es" placeholder="Advies (spaans)">{{ bericht.advice_es }}</textarea>
+            </div>
+        </nav>
+
+        <div class="grid-row">
+            <input type="checkbox" name="important" value="important" {% if bericht.important is not empty %}checked=checked{% endif %}> Belangrijk bericht <span style="font-size: 13px">(Komt bovenaan de lijst te staan)</span>
+        </div>
+
+        <div class="grid-row">
+            <input type="checkbox" id="toggle-send-sms" name="sms-versturen-toggle"> Verstuur SMS <span style="font-size: 13px">(Note: SMS berichten max 115 karakters. Kosten per bericht circa &euro; 0,10)</span>
+
+            <section style="padding-left: 20px" id="sms-panel">
+                <textarea name="sms_nl" placeholder="SMS (nl)">{{ bericht.sms_nl }}</textarea>
+                <textarea name="sms_en" placeholder="SMS (en)">{{ bericht.sms_en }}</textarea>
+                <textarea name="sms_de" placeholder="SMS (de)">{{ bericht.sms_de }}</textarea>
+                <textarea name="sms_es" placeholder="SMS (es)">{{ bericht.sms_es }}</textarea>
+            </section>
+            <script>
+              $("#toggle-send-sms").click(function () {
+                $("#sms-panel").toggle();
+            });
+            </script>
+        </div>
+
+        <div class="grid-row group">
+            <h3 style="margin-top: 20px">Publicatiedatum</h3>
+            <div class="datepicker">
+                <input type="text" name="startdate" id="startdate" placeholder="Start" value="{{ bericht.startdate }}">
+            </div>
+            <div class="datepicker">
+                <input type="text" name="enddate" id="enddate" placeholder="Einde" value="{{ bericht.enddate }}">
+            </div>
+        </div>
+
+        <div class="grid-row">
+            <input type="checkbox" name="is_live" value="is_live" {% if bericht.is_live is not empty %}checked=checked{% endif %}> Publiceren op Tour Buzz
+        </div>
+
+        <div class="grid-row">
+            <h3 style="margin-top: 20px"><label><input type="checkbox" name="include_location" {% if bericht.location.lat is not empty %}checked{% endif %}> Locatie gebruiken</label></h3>
+        </div>
+        <div class="grid-row">
+            <input type="text" id="locatiezoekveld" {% if bericht.location.lat is empty %}class="disabled"{% endif %}>
+        </div>
+        <div class="grid-row" style="margin-bottom: 10px">
+            <div style="position:relative; width: 500px; height: 400px">
+                <div id="locationpicker" style="position: absolute; width: 500px; height: 400px;"></div>
+                <div id="locationpickermask" style="position: absolute; width: 500px; height: 400px; background: #fff; opacity: 0.7; {% if bericht.location.lat is not empty %}display: none{% endif %}"></div>
+            </div>
+        </div>
+        <div class="grid-row" id="include_map_grid_row" {% if bericht.location.lat is empty %}style="display: none"{% endif %}>
+            <input type="checkbox" name="include_map" {% if bericht.include_map %}checked{% endif %}> Kaart laten zien
+        </div>
+        <script>
+            $("input[name=include_location]").click(function () {
+                $("#locatiezoekveld").toggleClass("disabled", !$(this).is(":checked"));
+                $("#locationpickermask").toggle(!$(this).is(":checked"));
+                $("#include_map_grid_row").toggle($(this).is(":checked"));
+            });
+            $("#locatiezoekveld").focus(function () {
+                if (!$("input[name=include_location").is(":checked")) {
+                    $("input[name=include_location]").click();
+                }
+            });
+        </script>
+
+        <div class="grid-row group">
+            <h3 style="margin-top: 20px">Afbeelding</h3>
+            {% include 'dashboard/partials/fileupload.twig' %}
+        </div>
+
+
+        <div class="grid-row group">
+            <h3 style="margin-top: 20px">Link</h3>
+            <input type="text" name="link" value="{{ bericht.link }}">
+        </div>
+
+        <button type="submit" name="submit" value="opslaan">Opslaan</button>
+
+        {% if bericht.id is not empty %}
+            <button type="submit" name="submit" value="dupliceren">Dupliceren</button>
+        {% endif %}
+    </form>
+
+    <section class="buzz">
+        {% include 'dashboard/partials/list.twig' %}
+    </section>
+
+</div>
+</main>
+{% endblock %}
+
+{% block footer %}{% endblock %}
